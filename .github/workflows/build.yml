@@ -2,9 +2,9 @@ name: Build, Test, and Deploy Map App
 
 on:
   push:
-    branches: [main, develop]  # Триггер на основные ветки
+    branches: [main, develop]
   pull_request:
-    branches: [main]          # Проверка PR в main
+    branches: [main]
 
 jobs:
   build-and-test:
@@ -18,7 +18,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
-          cache: gradle                 # Кэширование зависимостей Gradle
+          cache: gradle
 
       - name: Validate Gradle wrapper
         run: ./gradlew wrapper --validate-only
@@ -38,9 +38,9 @@ jobs:
             exit 1
           fi
 
-      - name: Archive test reports (optional)
+      - name: Archive test reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: **actions/upload-artifact@v4**  # ← Исправлено: v4 вместо v3
         with:
           name: test-reports
           path: |
@@ -52,7 +52,7 @@ jobs:
         run: ./gradlew jar --no-daemon
 
       - name: Upload application artifact
-        uses: actions/upload-artifact@v3
+        uses: **actions/upload-artifact@v4**  # ← Исправлено: v4 вместо v3
         with:
           name: map-app-jar
           path: build/libs/*.jar
