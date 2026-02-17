@@ -2,29 +2,41 @@ name: Build, Test, and Deploy Map App
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop]  # Триггер на основные ветки
   pull_request:
-    branches: [main]
+    branches: [main]            # Проверка PR в main
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
-          cache: gradle
+          cache: gradle                # Кэширование зависимостей Gradle
 
       - name: Validate Gradle wrapper
         run: ./gradlew wrapper --validate-only
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Build project
         run: ./gradlew build --no-daemon
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
       - name: Run tests
         run: ./gradlew test --no-daemon
@@ -32,9 +44,9 @@ jobs:
       - name: Check test results
         run: |
           if [ -f "build/test-results/test/TEST-*.xml" ]; then
-            echo "Tests completed successfully."
+            echo "✅ Tests completed successfully."
           else
-            echo "No test results found!"
+            echo "❌ No test results found!"
             exit 1
           fi
 
@@ -43,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: |                # ← строка 43: правильный многострочный синтаксис
+          path: |
             build/reports/tests/test/
             build/test-results/test/
           retention-days: 7
@@ -57,3 +69,9 @@ jobs:
           name: map-app-jar
           path: build/libs/*.jar
           retention-days: 14
+
+      - name: Display build info
+        run: |
+          echo "Build completed!"
+          echo "Artifacts available for 14 days."
+          ls -la build/libs/
