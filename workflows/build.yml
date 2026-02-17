@@ -1,0 +1,20 @@
+name: Maps CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - uses: android-actions/setup-android@v2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+      - run: echo "API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}" > app/src/debug/res/values/api_key.xml
+      - run: ./gradlew assembleDebug testDebugUnitTest
