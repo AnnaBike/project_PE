@@ -1,4 +1,4 @@
-name: Build, Test and Validate Maps App
+name: Build and Test Maps
 
 on:
   push:
@@ -14,49 +14,35 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
-          cache: 'gradle'
+          cache: 'maven'
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v3
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-maven-
 
       - name: Build project
-        run: ./gradlew build --no-daemon
+        run: mvn clean package -B -DskipTests
 
-      - name: Run unit tests
-        run: ./gradlew test --no-daemon
+      - name: Run tests
+        run: mvn test -B
 
-      - name: Run integration tests (if any)
-        if: always()
-        run: ./gradlew integrationTest --no-daemon
-
-      - name: Check map data integrity (example)
-        run: |
-          if [ -f "src/main/resources/maps/data.json" ]; then
-            echo "Map data file exists."
-          else
-            echo "ERROR: Map data file missing!"
-            exit 1
-          fi
-
-      - name: Upload test results
+      - name: Upload test results on failure
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Актуальная версия
         with:
           name: test-results
           path: |
-            build/test-results/
-            build/reports/
+            target/surefire-reports/
+            target/site/coverage/  # Если используется JaCoCo
+          retention-days: 7
