@@ -1,0 +1,15 @@
+name: Run Tests 
+on: [push] 
+jobs:
+test:
+runs-on: ubuntu-latest
+steps:
+- name: Checkout code 
+uses: actions/checkout@v2
+- name: Setup Java 
+uses: actions/setup-java@v2 
+with:
+istribution: 'temurin'
+java-version: '11' 
+- name: Run tests 
+run: ./gradlew test 
